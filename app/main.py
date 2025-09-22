@@ -6,6 +6,7 @@ from app.config import settings
 from app.db import init_db_pool, close_db_pool
 from app.routers import router as api_router
 from app.etl import start_background_workers
+from app.supabase_client import init_supabase_client
 
 app = FastAPI(title="Stablecoin Analytics API", version="1.0.0")
 
@@ -20,14 +21,17 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup() -> None:
-	await init_db_pool()
-	# Start ETL workers in background
+	# REST-only mode: initialize Supabase REST client
+	init_supabase_client()
+	# optional: skip direct DB pool when REST mode is used
+	# await init_db_pool()
 	asyncio.create_task(start_background_workers())
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
-	await close_db_pool()
+	# await close_db_pool()
+	pass
 
 
 @app.get("/")
