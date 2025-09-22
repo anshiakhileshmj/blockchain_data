@@ -2,6 +2,8 @@
 
 Python 3.11 FastAPI backend indexing stablecoin transfers across Ethereum, Polygon, BSC, Arbitrum, and Avalanche. Enriches transfers, tracks wallet balances, detects whale transfers, and maintains live whale tracking with top wallets. Stores data in Postgres (Supabase) and exposes REST endpoints.
 
+> Note: Deployment targets must use Python 3.11 (pinned via runtime.txt). Some deps (e.g., asyncpg) don't build on Python 3.13 on Render yet.
+
 ## Quickstart
 
 1. Create and populate `.env`:
@@ -60,11 +62,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port %PORT%
 All endpoints require `Authorization: Bearer <API_KEY>`; keys are validated against `api_keys`.
 
 ## Deploy on Render
-Provide environment variables above and run:
-
-```
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
+- Ensure runtime.txt specifies `3.11.9` (Python 3.11)
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ## Notes
 - Uses `asyncpg` connection pool
