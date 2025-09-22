@@ -70,6 +70,7 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 					for log in logs:
 						tx_hash = log["transactionHash"].hex()
 						block_number = log["blockNumber"]
+						log_index = log.get("logIndex")
 						from_address = Web3.to_checksum_address("0x" + log["topics"][1].hex()[-40:])
 						to_address = Web3.to_checksum_address("0x" + log["topics"][2].hex()[-40:])
 						value = int(log["data"], 16)
@@ -87,8 +88,8 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 							"""
 							INSERT INTO stablecoin_transfers (
 								network, chain_id, token, token_address, from_address, to_address, amount,
-								tx_hash, block_number, block_timestamp, gas_used, gas_price, gas_fee, status
-							) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+								tx_hash, log_index, block_number, block_timestamp, gas_used, gas_price, gas_fee, status
+							) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
 							ON CONFLICT DO NOTHING
 							""",
 							network,
@@ -99,6 +100,7 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 							to_address,
 							amount,
 							tx_hash,
+							int(log_index) if log_index is not None else None,
 							block_number,
 							block_ts,
 							float(gas_used or 0),
@@ -106,30 +108,31 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 							float(gas_fee or 0),
 							status,
 						)
-					)
+						)
 
-					if amount >= get_whale_threshold_usd(token):
-						await pool.execute(
-							"""
-							INSERT INTO whale_transfers (
-								network, token, token_address, from_address, to_address, amount, tx_hash,
-								block_number, block_timestamp, gas_used, gas_price, gas_fee, status
-							) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-							""",
-							network,
-							token,
-							address,
-							from_address,
-							to_address,
-							amount,
-							tx_hash,
-							block_number,
-							block_ts,
-							float(gas_used or 0),
-							float(gas_price or 0),
-							float(gas_fee or 0),
-							status,
-						)
+						if amount >= get_whale_threshold_usd(token):
+							await pool.execute(
+								"""
+								INSERT INTO whale_transfers (
+									network, token, token_address, from_address, to_address, amount, tx_hash,
+									log_index, block_number, block_timestamp, gas_used, gas_price, gas_fee, status
+								) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+								""",
+								network,
+								token,
+								address,
+								from_address,
+								to_address,
+								amount,
+								tx_hash,
+								int(log_index) if log_index is not None else None,
+								block_number,
+								block_ts,
+								float(gas_used or 0),
+								float(gas_price or 0),
+								float(gas_fee or 0),
+								status,
+							)
 						)
 			except Exception:
 				pass
