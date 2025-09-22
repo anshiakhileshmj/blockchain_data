@@ -108,7 +108,6 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 							float(gas_fee or 0),
 							status,
 						)
-						)
 
 						if amount >= get_whale_threshold_usd(token):
 							await pool.execute(
@@ -133,7 +132,6 @@ async def poll_transfers(clients: Dict[str, Web3]) -> None:
 								float(gas_fee or 0),
 								status,
 							)
-						)
 			except Exception:
 				pass
 		await asyncio.sleep(settings.ETL_POLL_SEC)
